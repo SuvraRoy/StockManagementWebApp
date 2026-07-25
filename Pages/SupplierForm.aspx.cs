@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using System.Text.RegularExpressions;
-
+using System.Web.UI;
 
 public partial class Pages_SupplierForm : System.Web.UI.Page
 {
@@ -15,33 +11,45 @@ public partial class Pages_SupplierForm : System.Web.UI.Page
         if (Session["Username"] == null)
         {
             Response.Redirect("~/Login.aspx");
+            return;
         }
 
-        if (!IsPostBack)
+
+    if (!IsPostBack)
         {
-            if (Request.QueryString["SupplierID"] != null)
+            int supplierId;
+
+            if (int.TryParse(Request.QueryString["SupplierID"], out supplierId) && supplierId > 0)
             {
-                // Edit Mode
-
-                int supplierId = Convert.ToInt32(Request.QueryString["SupplierID"]);
-
-                LoadSupplier(supplierId);
+                // EDIT MODE
+                hfSupplierID.Value = supplierId.ToString();
 
                 lblPageTitle.InnerText = "Edit Supplier";
                 btnSave.Text = "Update Supplier";
+
+                if (!LoadSupplier(supplierId))
+                {
+                    ShowValidationMessage("Supplier record was not found.");
+                    btnSave.Enabled = false;
+                }
             }
             else
             {
-                // Add Mode
+                // ADD MODE
+                hfSupplierID.Value = "";
 
                 lblPageTitle.InnerText = "Add Supplier";
-
                 btnSave.Text = "Save Supplier";
 
                 GenerateSupplierCode();
             }
         }
     }
+
+
+    // =========================================================
+    // GENERATE SUPPLIER CODE
+    // =========================================================
 
     private void GenerateSupplierCode()
     {
@@ -50,434 +58,1010 @@ public partial class Pages_SupplierForm : System.Web.UI.Page
         using (SqlConnection conn = new SqlConnection(connStr))
         {
             string qry = @"
-            SELECT ISNULL(MAX(SupplierID),0) + 1
+            SELECT ISNULL(MAX(SupplierID), 0) + 1
             FROM tbl_Suppliers";
 
             using (SqlCommand cmd = new SqlCommand(qry, conn))
             {
-                conn.Open();
-
-                int nextId = Convert.ToInt32(cmd.ExecuteScalar());
-
-                txtSupplierCode.Text = "SUP" + nextId.ToString("D6");
-            }
-        }
-    }
-
-    private void LoadSupplier(int supplierId)
-    {
-        string connStr = Connection.getConnectionString();
-
-        using (SqlConnection conn = new SqlConnection(connStr))
-        {
-            string qry = @"
-        SELECT *
-        FROM tbl_Suppliers
-        WHERE SupplierID = @SupplierID";
-
-            using (SqlCommand cmd = new SqlCommand(qry, conn))
-            {
-                cmd.Parameters.AddWithValue("@SupplierID", supplierId);
-
-                conn.Open();
-
-                SqlDataReader dr = cmd.ExecuteReader();
-
-                if (dr.Read())
+                try
                 {
-                    hfSupplierID.Value = supplierId.ToString();
+                    conn.Open();
 
-                    txtSupplierCode.Text = dr["SupplierCode"].ToString();
+                    int nextId = Convert.ToInt32(
+                        cmd.ExecuteScalar()
+                    );
 
-                    txtCompanyName.Text = dr["CompanyName"].ToString();
-
-                    txtWorkPhone.Text = dr["Phone"].ToString();
-
-                    txtContactName.Text = dr["ContactPerson"].ToString();
-
-                    txtContMobile.Text = dr["ContactPersonNo"].ToString();
-
-                    txtEmail.Text = dr["Email"].ToString();
-
-                    ddlCountry.SelectedValue = dr["Country"].ToString();
-
-                    txtState.Text = dr["State"].ToString();
-
-                    txtCity.Text = dr["City"].ToString();
-
-                    txtPincode.Text = dr["PinCode"].ToString();
-
-                    txtAddress.Text = dr["Address"].ToString();
-
-                    txtGstIn.Text = dr["GSTIN"].ToString();
-
-                    txtPan.Text = dr["PAN"].ToString();
-
-                    txtBankName.Text = dr["BankName"].ToString();
-
-                    txtAccountHolder.Text = dr["AccountHolderName"].ToString();
-
-                    ddlAccountType.SelectedValue = dr["AccountType"].ToString();
-
-                    txtAccountNumber.Text = dr["AccountNumber"].ToString();
-
-                    txtIfscCode.Text = dr["IFSCCode"].ToString();
+                    txtSupplierCode.Text =
+                        "SUP" + nextId.ToString("D6");
+                }
+                catch (Exception ex)
+                {
+                    ShowValidationMessage(
+                        "Unable to generate Supplier Code: "
+                        + ex.Message
+                    );
                 }
             }
         }
     }
 
-    protected void btnSave_Click(object sender, EventArgs e)
+
+    // =========================================================
+    // LOAD SUPPLIER FOR EDIT
+    // =========================================================
+
+    private bool LoadSupplier(int supplierId)
     {
-        // Step 1: hide any previous message:
-        divMessage.Visible = false;
-
-        // Step 2: Validate Form
-        string validationMessage = ValidateSupplier();
-
-        if (!string.IsNullOrEmpty(validationMessage))
-        {
-            //ShowToast(validationMessage, "danger");
-            ShowValidationMessage(validationMessage); 
-            return;
-        }
-        string duplicateError = CheckDuplicateSupplier();
-
-        if (duplicateError != "")
-        {
-            ShowValidationMessage(duplicateError);
-            return;
-        }
-
-        // Step 3: Save or Update
-        if (string.IsNullOrEmpty(hfSupplierID.Value))
-        {
-            InsertSupplier();
-            Response.Redirect("Suppliers.aspx?msg=saved");
-        }
-        else
-        {
-            UpdateSupplier();
-            Response.Redirect("Suppliers.aspx?msg=updated");
-        }
-    }
-
-
-    private void AddSupplierParameters(SqlCommand cmd)
-    {
-        cmd.Parameters.AddWithValue("@SupplierCode", txtSupplierCode.Text.Trim());
-        cmd.Parameters.AddWithValue("@CompanyName", txtCompanyName.Text.Trim());
-        cmd.Parameters.AddWithValue("@Phone", txtWorkPhone.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@ContactPerson", txtContactName.Text.Trim());
-        cmd.Parameters.AddWithValue("@ContactPersonNo", txtContMobile.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@Country", ddlCountry.SelectedValue);
-        cmd.Parameters.AddWithValue("@State", txtState.Text.Trim());
-        cmd.Parameters.AddWithValue("@City", txtCity.Text.Trim());
-        cmd.Parameters.AddWithValue("@PinCode", txtPincode.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@Address", txtAddress.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@GSTIN", txtGstIn.Text.Trim());
-        cmd.Parameters.AddWithValue("@PAN", txtPan.Text.Trim());
-
-        cmd.Parameters.AddWithValue("@BankName", txtBankName.Text.Trim());
-        cmd.Parameters.AddWithValue("@AccountHolderName", txtAccountHolder.Text.Trim());
-        cmd.Parameters.AddWithValue("@AccountType", ddlAccountType.SelectedValue);
-        cmd.Parameters.AddWithValue("@AccountNumber", txtAccountNumber.Text.Trim());
-        cmd.Parameters.AddWithValue("@IFSCCode", txtIfscCode.Text.Trim());
-    }
-
-    private void InsertSupplier()
-    {
-        string connStr = Connection.getConnectionString();
-
-        using (SqlConnection conn = new SqlConnection(connStr))
-        {
-            string qry = @"INSERT INTO tbl_Suppliers( SupplierCode, CompanyName,Phone,ContactPerson,ContactPersonNo, Email, Country, State, City, PinCode, Address, GSTIN, PAN, BankName, AccountHolderName, AccountType, AccountNumber, IFSCCode, CreatedDate, IsActive
-)
-VALUES
-( @SupplierCode,
-    @CompanyName,
-    @Phone,
-    @ContactPerson,
-    @ContactPersonNo,
-    @Email,
-    @Country,
-    @State,
-    @City,
-    @PinCode,
-    @Address,
-    @GSTIN,
-    @PAN,
-    @BankName,
-    @AccountHolderName,
-    @AccountType,
-    @AccountNumber,
-    @IFSCCode,
-    @CreatedDate,
-    1
-)";
-            using (SqlCommand cmd = new SqlCommand(qry, conn))
-            {
-                AddSupplierParameters(cmd);
-
-                cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-    }
-
-
-    private void UpdateSupplier()
-    {
-
         string connStr = Connection.getConnectionString();
 
         using (SqlConnection conn = new SqlConnection(connStr))
         {
             string qry = @"
-UPDATE tbl_Suppliers
-SET
-    CompanyName = @CompanyName,
-    Phone = @Phone,
-    ContactPerson = @ContactPerson,
-    ContactPersonNo = @ContactPersonNo,
-    Email = @Email,
-    Country = @Country,
-    State = @State,
-    City = @City,
-    PinCode = @PinCode,
-    Address = @Address,
-    GSTIN = @GSTIN,
-    PAN = @PAN,
-    BankName = @BankName,
-    AccountHolderName = @AccountHolderName,
-    AccountType = @AccountType,
-    AccountNumber = @AccountNumber,
-    IFSCCode = @IFSCCode
-WHERE SupplierID = @SupplierID";
+            SELECT
+                SupplierID,
+                SupplierCode,
+                CompanyName,
+                Phone,
+                ContactPerson,
+                ContactPersonNo,
+                Email,
+                Country,
+                State,
+                City,
+                PinCode,
+                Address,
+                GSTIN,
+                PAN,
+                BankName,
+                AccountHolderName,
+                AccountType,
+                AccountNumber,
+                IFSCCode
+            FROM tbl_Suppliers
+            WHERE SupplierID = @SupplierID";
 
             using (SqlCommand cmd = new SqlCommand(qry, conn))
             {
-                AddSupplierParameters(cmd);
-
-                cmd.Parameters.AddWithValue(
+                cmd.Parameters.Add(
                     "@SupplierID",
-                    Convert.ToInt32(hfSupplierID.Value));
+                    SqlDbType.Int
+                ).Value = supplierId;
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                try
+                {
+                    conn.Open();
+
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (!dr.Read())
+                        {
+                            return false;
+                        }
+
+                        txtSupplierCode.Text =
+                            GetDbValue(dr, "SupplierCode");
+
+                        txtCompanyName.Text =
+                            GetDbValue(dr, "CompanyName");
+
+                        txtWorkPhone.Text =
+                            GetDbValue(dr, "Phone");
+
+                        txtContactName.Text =
+                            GetDbValue(dr, "ContactPerson");
+
+                        txtContMobile.Text =
+                            GetDbValue(dr, "ContactPersonNo");
+
+                        txtEmail.Text =
+                            GetDbValue(dr, "Email");
+
+                        SetCountryValue(
+                            GetDbValue(dr, "Country")
+                        );
+
+                        txtState.Text =
+                            GetDbValue(dr, "State");
+
+                        txtCity.Text =
+                            GetDbValue(dr, "City");
+
+                        txtPincode.Text =
+                            GetDbValue(dr, "PinCode");
+
+                        txtAddress.Text =
+                            GetDbValue(dr, "Address");
+
+                        txtGstIn.Text =
+                            GetDbValue(dr, "GSTIN");
+
+                        txtPan.Text =
+                            GetDbValue(dr, "PAN");
+
+                        txtBankName.Text =
+                            GetDbValue(dr, "BankName");
+
+                        txtAccountHolder.Text =
+                            GetDbValue(
+                                dr,
+                                "AccountHolderName"
+                            );
+
+                        SetAccountTypeValue(
+                            GetDbValue(
+                                dr,
+                                "AccountType"
+                            )
+                        );
+
+                        txtAccountNumber.Text =
+                            GetDbValue(
+                                dr,
+                                "AccountNumber"
+                            );
+
+                        txtIfscCode.Text =
+                            GetDbValue(
+                                dr,
+                                "IFSCCode"
+                            );
+
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowValidationMessage(
+                        "Unable to load supplier: "
+                        + ex.Message
+                    );
+
+                    return false;
+                }
             }
         }
     }
 
 
-    private void ShowToast(string message, string type)
+    // =========================================================
+    // SAVE / UPDATE
+    // =========================================================
+
+    protected void btnSave_Click(
+        object sender,
+        EventArgs e)
     {
-        lblToast.Text = message;
+        divMessage.Visible = false;
 
-        liveToast.Attributes["class"] = "toast shadow-lg";
+        string validationMessage =
+            ValidateSupplier();
 
-        switch (type)
+        if (!string.IsNullOrEmpty(
+            validationMessage))
         {
-            case "success":
-                liveToast.Attributes["class"] += " text-bg-success";
-                break;
+            ShowValidationMessage(
+                validationMessage
+            );
 
-            case "danger":
-                liveToast.Attributes["class"] += " text-bg-danger";
-                break;
-
-            case "warning":
-                liveToast.Attributes["class"] += " text-bg-warning";
-                break;
-
-            case "info":
-                liveToast.Attributes["class"] += " text-bg-info";
-                break;
+            return;
         }
 
-        ScriptManager.RegisterStartupScript(
-            this,
-            GetType(),
-            "showToast",
-            @"
-        var toastElement = document.getElementById('liveToast');
-        var toast = new bootstrap.Toast(toastElement);
-        toast.show();
-        ",
-            true);
+
+        string duplicateError =
+            CheckDuplicateSupplier();
+
+        if (!string.IsNullOrEmpty(
+            duplicateError))
+        {
+            ShowValidationMessage(
+                duplicateError
+            );
+
+            return;
+        }
+
+
+        try
+        {
+            if (string.IsNullOrEmpty(
+                hfSupplierID.Value))
+            {
+                InsertSupplier();
+
+                Response.Redirect(
+                    "Suppliers.aspx?msg=saved"
+                );
+            }
+            else
+            {
+                int supplierId;
+
+                if (!int.TryParse(
+                    hfSupplierID.Value,
+                    out supplierId) ||
+                    supplierId <= 0)
+                {
+                    ShowValidationMessage(
+                        "Invalid Supplier ID."
+                    );
+
+                    return;
+                }
+
+                if (UpdateSupplier(supplierId))
+                {
+                    Response.Redirect(
+                        "Suppliers.aspx?msg=updated"
+                    );
+                }
+                else
+                {
+                    ShowValidationMessage(
+                        "Supplier could not be updated."
+                    );
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowValidationMessage(
+                "Unable to save supplier: "
+                + ex.Message
+            );
+        }
     }
 
 
+    // =========================================================
+    // INSERT SUPPLIER
+    // =========================================================
 
-    //protected void btnReset_Click(object sender, EventArgs e)
-    //{
-    //    if (string.IsNullOrEmpty(hfSupplierID.Value))
-    //    {
-    //        ClearForm();
-
-    //        //GenerateSupplierCode();
-    //        Response.Write(txtCompanyName.Text == "" ? "Company Cleared" : "Company NOT Cleared");
-    //    }
-    //    else
-    //    {
-    //        LoadSupplier(Convert.ToInt32(hfSupplierID.Value));
-    //    }
-    //}
-
-    //private void ClearForm()
-    //{
-    //    txtCompanyName.Text = "";
-    //}
-    protected void btnCancel_Click(object sender, EventArgs e)
+    private void InsertSupplier()
     {
-        Response.Redirect("Suppliers.aspx");
+        string connStr =
+            Connection.getConnectionString();
+
+        using (SqlConnection conn =
+            new SqlConnection(connStr))
+        {
+            string qry = @"
+            INSERT INTO tbl_Suppliers
+            (
+                SupplierCode,
+                CompanyName,
+                Phone,
+                ContactPerson,
+                ContactPersonNo,
+                Email,
+                Country,
+                State,
+                City,
+                PinCode,
+                Address,
+                GSTIN,
+                PAN,
+                BankName,
+                AccountHolderName,
+                AccountType,
+                AccountNumber,
+                IFSCCode,
+                CreatedDate,
+                IsActive
+            )
+            VALUES
+            (
+                @SupplierCode,
+                @CompanyName,
+                @Phone,
+                @ContactPerson,
+                @ContactPersonNo,
+                @Email,
+                @Country,
+                @State,
+                @City,
+                @PinCode,
+                @Address,
+                @GSTIN,
+                @PAN,
+                @BankName,
+                @AccountHolderName,
+                @AccountType,
+                @AccountNumber,
+                @IFSCCode,
+                GETDATE(),
+                1
+            )";
+
+            using (SqlCommand cmd =
+                new SqlCommand(qry, conn))
+            {
+                AddSupplierParameters(cmd);
+
+                conn.Open();
+
+                int rowsAffected =
+                    cmd.ExecuteNonQuery();
+
+                if (rowsAffected <= 0)
+                {
+                    throw new Exception(
+                        "Supplier was not inserted."
+                    );
+                }
+            }
+        }
     }
+
+
+    // =========================================================
+    // UPDATE SUPPLIER
+    // =========================================================
+
+    private bool UpdateSupplier(
+        int supplierId)
+    {
+        string connStr =
+            Connection.getConnectionString();
+
+        using (SqlConnection conn =
+            new SqlConnection(connStr))
+        {
+            string qry = @"
+            UPDATE tbl_Suppliers
+            SET
+                CompanyName = @CompanyName,
+                Phone = @Phone,
+                ContactPerson = @ContactPerson,
+                ContactPersonNo = @ContactPersonNo,
+                Email = @Email,
+                Country = @Country,
+                State = @State,
+                City = @City,
+                PinCode = @PinCode,
+                Address = @Address,
+                GSTIN = @GSTIN,
+                PAN = @PAN,
+                BankName = @BankName,
+                AccountHolderName = @AccountHolderName,
+                AccountType = @AccountType,
+                AccountNumber = @AccountNumber,
+                IFSCCode = @IFSCCode
+            WHERE SupplierID = @SupplierID";
+
+            using (SqlCommand cmd =
+                new SqlCommand(qry, conn))
+            {
+                AddSupplierParameters(cmd);
+
+                cmd.Parameters.Add(
+                    "@SupplierID",
+                    SqlDbType.Int
+                ).Value = supplierId;
+
+                conn.Open();
+
+                int rowsAffected =
+                    cmd.ExecuteNonQuery();
+
+                return rowsAffected > 0;
+            }
+        }
+    }
+
+
+    // =========================================================
+    // COMMON SUPPLIER PARAMETERS
+    // =========================================================
+
+    private void AddSupplierParameters(
+        SqlCommand cmd)
+    {
+        cmd.Parameters.Add(
+            "@SupplierCode",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            txtSupplierCode.Text.Trim();
+
+        cmd.Parameters.Add(
+            "@CompanyName",
+            SqlDbType.VarChar,
+            150
+        ).Value =
+            txtCompanyName.Text.Trim();
+
+        cmd.Parameters.Add(
+            "@Phone",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            txtWorkPhone.Text.Trim();
+
+        cmd.Parameters.Add(
+            "@ContactPerson",
+            SqlDbType.VarChar,
+            100
+        ).Value =
+            ToDbValue(
+                txtContactName.Text
+            );
+
+        cmd.Parameters.Add(
+            "@ContactPersonNo",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            ToDbValue(
+                txtContMobile.Text
+            );
+
+        cmd.Parameters.Add(
+            "@Email",
+            SqlDbType.VarChar,
+            150
+        ).Value =
+            ToDbValue(
+                txtEmail.Text
+            );
+
+        cmd.Parameters.Add(
+            "@Country",
+            SqlDbType.VarChar,
+            100
+        ).Value =
+            ToDbValue(
+                ddlCountry.SelectedValue
+            );
+
+        cmd.Parameters.Add(
+            "@State",
+            SqlDbType.VarChar,
+            100
+        ).Value =
+            ToDbValue(
+                txtState.Text
+            );
+
+        cmd.Parameters.Add(
+            "@City",
+            SqlDbType.VarChar,
+            100
+        ).Value =
+            ToDbValue(
+                txtCity.Text
+            );
+
+        cmd.Parameters.Add(
+            "@PinCode",
+            SqlDbType.VarChar,
+            10
+        ).Value =
+            ToDbValue(
+                txtPincode.Text
+            );
+
+        cmd.Parameters.Add(
+            "@Address",
+            SqlDbType.VarChar,
+            300
+        ).Value =
+            ToDbValue(
+                txtAddress.Text
+            );
+
+        cmd.Parameters.Add(
+            "@GSTIN",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            ToDbValue(
+                txtGstIn.Text.ToUpper()
+            );
+
+        cmd.Parameters.Add(
+            "@PAN",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            ToDbValue(
+                txtPan.Text.ToUpper()
+            );
+
+        cmd.Parameters.Add(
+            "@BankName",
+            SqlDbType.VarChar,
+            150
+        ).Value =
+            ToDbValue(
+                txtBankName.Text
+            );
+
+        cmd.Parameters.Add(
+            "@AccountHolderName",
+            SqlDbType.VarChar,
+            150
+        ).Value =
+            ToDbValue(
+                txtAccountHolder.Text
+            );
+
+        cmd.Parameters.Add(
+            "@AccountType",
+            SqlDbType.VarChar,
+            50
+        ).Value =
+            ToDbValue(
+                ddlAccountType.SelectedValue
+            );
+
+        cmd.Parameters.Add(
+            "@AccountNumber",
+            SqlDbType.VarChar,
+            50
+        ).Value =
+            ToDbValue(
+                txtAccountNumber.Text
+            );
+
+        cmd.Parameters.Add(
+            "@IFSCCode",
+            SqlDbType.VarChar,
+            20
+        ).Value =
+            ToDbValue(
+                txtIfscCode.Text.ToUpper()
+            );
+    }
+
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
 
     private string ValidateSupplier()
     {
-        if (string.IsNullOrWhiteSpace(txtCompanyName.Text))
-            return "Company Name is required.";
+        string companyName =
+            txtCompanyName.Text.Trim();
 
-        //if (string.IsNullOrWhiteSpace(txtContactName.Text))
-        //    return "Contact Person is required.";
+        string email =
+            txtEmail.Text.Trim();
 
-        if (string.IsNullOrWhiteSpace(txtEmail.Text))
-            return "Email is required.";
+        string phone =
+            txtWorkPhone.Text.Trim();
 
-        if (!Regex.IsMatch(txtEmail.Text, @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"))
-            return "Enter Proper Email";
+        string contactMobile =
+            txtContMobile.Text.Trim();
 
-        if (string.IsNullOrWhiteSpace(txtWorkPhone.Text))
-            return "Company's Phone Number is required.";
+        string gstin =
+            txtGstIn.Text.Trim().ToUpper();
 
-        if (!Regex.IsMatch(txtWorkPhone.Text, @"^[6-9][0-9]{9}$"))
+        string pan =
+            txtPan.Text.Trim().ToUpper();
+
+        string pinCode =
+            txtPincode.Text.Trim();
+
+        string ifsc =
+            txtIfscCode.Text.Trim().ToUpper();
+
+
+        // COMPANY
+        if (string.IsNullOrWhiteSpace(
+            companyName))
         {
-            return "Enter a valid Work Phone number.";
+            return "Company Name is required.";
         }
 
-        // GSTIN Validation
-        string gstin = txtGstIn.Text.Trim().ToUpper();
 
-        if (!string.IsNullOrWhiteSpace(gstin))
+        // COMPANY PHONE
+        if (string.IsNullOrWhiteSpace(
+            phone))
         {
-            if (!Regex.IsMatch(gstin, @"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"))
+            return "Company Phone Number is required.";
+        }
+
+        if (!Regex.IsMatch(
+            phone,
+            @"^[6-9][0-9]{9}$"))
+        {
+            return "Enter a valid Company Phone Number.";
+        }
+
+
+        // EMAIL
+        if (!string.IsNullOrWhiteSpace(
+            email))
+        {
+            if (!Regex.IsMatch(
+                email,
+                @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"))
+            {
+                return "Enter a valid Email Address.";
+            }
+        }
+
+
+        // CONTACT MOBILE
+        if (!string.IsNullOrWhiteSpace(
+            contactMobile))
+        {
+            if (!Regex.IsMatch(
+                contactMobile,
+                @"^[6-9][0-9]{9}$"))
+            {
+                return "Enter a valid Contact Person Number.";
+            }
+        }
+
+
+        // PIN CODE
+        if (!string.IsNullOrWhiteSpace(
+            pinCode))
+        {
+            if (!Regex.IsMatch(
+                pinCode,
+                @"^[0-9]{6}$"))
+            {
+                return "Enter a valid 6-digit PIN Code.";
+            }
+        }
+
+
+        // GSTIN
+        if (!string.IsNullOrWhiteSpace(
+            gstin))
+        {
+            if (!Regex.IsMatch(
+                gstin,
+                @"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"))
             {
                 return "Please enter a valid GSTIN.";
             }
         }
 
-        // PAN Validation
-        string pan = txtPan.Text.Trim().ToUpper();
 
-        if (!string.IsNullOrWhiteSpace(pan))
+        // PAN
+        if (!string.IsNullOrWhiteSpace(
+            pan))
         {
-            if (!Regex.IsMatch(pan, @"^[A-Z]{5}[0-9]{4}[A-Z]$"))
+            if (!Regex.IsMatch(
+                pan,
+                @"^[A-Z]{5}[0-9]{4}[A-Z]$"))
             {
                 return "Please enter a valid PAN.";
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(txtContMobile.Text))
+
+        // IFSC
+        if (!string.IsNullOrWhiteSpace(
+            ifsc))
         {
-            if (!Regex.IsMatch(txtContMobile.Text, @"^[6-9][0-9]{9}$"))
+            if (!Regex.IsMatch(
+                ifsc,
+                @"^[A-Z]{4}0[A-Z0-9]{6}$"))
             {
-                return "Enter a valid Contact Mobile number.";
+                return "Please enter a valid IFSC Code.";
             }
         }
 
-        //if (ddlCountry.SelectedIndex == 0)
-        //    return "Please select a Country.";
 
         return "";
     }
 
+
+    // =========================================================
+    // DUPLICATE CHECK
+    // =========================================================
 
     private string CheckDuplicateSupplier()
     {
-        string connStr = Connection.getConnectionString();
+        string connStr =
+            Connection.getConnectionString();
 
-        using (SqlConnection conn = new SqlConnection(connStr))
+        int supplierId = 0;
+
+        if (!string.IsNullOrEmpty(
+            hfSupplierID.Value))
+        {
+            int.TryParse(
+                hfSupplierID.Value,
+                out supplierId
+            );
+        }
+
+
+        using (SqlConnection conn =
+            new SqlConnection(connStr))
         {
             string qry = @"
-SELECT TOP 1
-    Phone,
-    ContactPersonNo,
-    Email,
-    GSTIN
-FROM tbl_Suppliers
-WHERE SupplierID <> @SupplierID
-AND
-(
-    Phone = @Phone
-    OR
-    (@ContactPersonNo <> '' AND ContactPersonNo = @ContactPersonNo)
-    OR
-    (@Email <> '' AND Email = @Email)
-    OR
-    (@GSTIN <> '' AND GSTIN = @GSTIN)
-)";
+            SELECT TOP 1
+                SupplierCode,
+                CompanyName,
+                Phone,
+                ContactPersonNo,
+                Email,
+                GSTIN,
+                PAN
+            FROM tbl_Suppliers
+            WHERE SupplierID <> @SupplierID
+            AND
+            (
+                UPPER(SupplierCode) = UPPER(@SupplierCode)
+                OR UPPER(CompanyName) = UPPER(@CompanyName)
+                OR Phone = @Phone
+                OR
+                (
+                    @ContactPersonNo <> ''
+                    AND ContactPersonNo = @ContactPersonNo
+                )
+                OR
+                (
+                    @Email <> ''
+                    AND UPPER(Email) = UPPER(@Email)
+                )
+                OR
+                (
+                    @GSTIN <> ''
+                    AND UPPER(GSTIN) = UPPER(@GSTIN)
+                )
+                OR
+                (
+                    @PAN <> ''
+                    AND UPPER(PAN) = UPPER(@PAN)
+                )
+            )";
 
-            using (SqlCommand cmd = new SqlCommand(qry, conn))
+
+            using (SqlCommand cmd =
+                new SqlCommand(qry, conn))
             {
-                cmd.Parameters.AddWithValue("@Phone", txtWorkPhone.Text.Trim());
+                cmd.Parameters.Add(
+                    "@SupplierID",
+                    SqlDbType.Int
+                ).Value = supplierId;
 
-                cmd.Parameters.AddWithValue("@ContactPersonNo", txtContMobile.Text.Trim());
+                cmd.Parameters.Add(
+                    "@SupplierCode",
+                    SqlDbType.VarChar,
+                    20
+                ).Value =
+                    txtSupplierCode.Text.Trim();
 
-                cmd.Parameters.AddWithValue("@Email", txtEmail.Text.Trim());
+                cmd.Parameters.Add(
+                    "@CompanyName",
+                    SqlDbType.VarChar,
+                    150
+                ).Value =
+                    txtCompanyName.Text.Trim();
 
-                cmd.Parameters.AddWithValue("@GSTIN", txtGstIn.Text.Trim().ToUpper());
+                cmd.Parameters.Add(
+                    "@Phone",
+                    SqlDbType.VarChar,
+                    20
+                ).Value =
+                    txtWorkPhone.Text.Trim();
 
-                int supplierId = 0;
+                cmd.Parameters.Add(
+                    "@ContactPersonNo",
+                    SqlDbType.VarChar,
+                    20
+                ).Value =
+                    txtContMobile.Text.Trim();
 
-                if (!string.IsNullOrEmpty(hfSupplierID.Value))
-                {
-                    supplierId = Convert.ToInt32(hfSupplierID.Value);
-                }
+                cmd.Parameters.Add(
+                    "@Email",
+                    SqlDbType.VarChar,
+                    150
+                ).Value =
+                    txtEmail.Text.Trim();
 
-                cmd.Parameters.AddWithValue("@SupplierID", supplierId);
+                cmd.Parameters.Add(
+                    "@GSTIN",
+                    SqlDbType.VarChar,
+                    20
+                ).Value =
+                    txtGstIn.Text.Trim().ToUpper();
+
+                cmd.Parameters.Add(
+                    "@PAN",
+                    SqlDbType.VarChar,
+                    20
+                ).Value =
+                    txtPan.Text.Trim().ToUpper();
+
 
                 conn.Open();
 
-                SqlDataReader dr = cmd.ExecuteReader();
-
-                if (dr.Read())
+                using (SqlDataReader dr =
+                    cmd.ExecuteReader())
                 {
-                    if (dr["Phone"].ToString() == txtWorkPhone.Text.Trim())
-                        return "Work Phone already exists.";
+                    if (dr.Read())
+                    {
+                        if (
+                            string.Equals(
+                                dr["SupplierCode"].ToString(),
+                                txtSupplierCode.Text.Trim(),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "Supplier Code already exists.";
+                        }
 
-                    if (!string.IsNullOrWhiteSpace(txtContMobile.Text) &&
-                        dr["ContactPersonNo"].ToString() == txtContMobile.Text.Trim())
-                        return "Contact Mobile already exists.";
 
-                    if (!string.IsNullOrWhiteSpace(txtEmail.Text) &&
-                        dr["Email"].ToString().Equals(txtEmail.Text.Trim(),
-                        StringComparison.OrdinalIgnoreCase))
-                        return "Email already exists.";
+                        if (
+                            string.Equals(
+                                dr["CompanyName"].ToString(),
+                                txtCompanyName.Text.Trim(),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "Company Name already exists.";
+                        }
 
-                    if (!string.IsNullOrWhiteSpace(txtGstIn.Text) &&
-                        dr["GSTIN"].ToString().Equals(txtGstIn.Text.Trim(),
-                        StringComparison.OrdinalIgnoreCase))
-                        return "GSTIN already exists.";
+
+                        if (
+                            dr["Phone"].ToString() ==
+                            txtWorkPhone.Text.Trim())
+                        {
+                            return "Company Phone Number already exists.";
+                        }
+
+
+                        if (
+                            !string.IsNullOrWhiteSpace(
+                                txtContMobile.Text) &&
+                            dr["ContactPersonNo"].ToString() ==
+                            txtContMobile.Text.Trim())
+                        {
+                            return "Contact Person Number already exists.";
+                        }
+
+
+                        if (
+                            !string.IsNullOrWhiteSpace(
+                                txtEmail.Text) &&
+                            string.Equals(
+                                dr["Email"].ToString(),
+                                txtEmail.Text.Trim(),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "Email already exists.";
+                        }
+
+
+                        if (
+                            !string.IsNullOrWhiteSpace(
+                                txtGstIn.Text) &&
+                            string.Equals(
+                                dr["GSTIN"].ToString(),
+                                txtGstIn.Text.Trim(),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "GSTIN already exists.";
+                        }
+
+
+                        if (
+                            !string.IsNullOrWhiteSpace(
+                                txtPan.Text) &&
+                            string.Equals(
+                                dr["PAN"].ToString(),
+                                txtPan.Text.Trim(),
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "PAN already exists.";
+                        }
+                    }
                 }
-            
-        }
+            }
         }
 
         return "";
     }
 
-    private void ShowValidationMessage(string message)
+
+    // =========================================================
+    // CANCEL
+    // =========================================================
+
+    protected void btnCancel_Click(
+        object sender,
+        EventArgs e)
+    {
+        Response.Redirect(
+            "Suppliers.aspx"
+        );
+    }
+
+
+    // =========================================================
+    // COUNTRY DROPDOWN SAFETY
+    // =========================================================
+
+    private void SetCountryValue(
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (ddlCountry.Items.FindByValue(
+            value) != null)
+        {
+            ddlCountry.SelectedValue =
+                value;
+        }
+    }
+
+
+    // =========================================================
+    // ACCOUNT TYPE DROPDOWN SAFETY
+    // =========================================================
+
+    private void SetAccountTypeValue(
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (ddlAccountType.Items.FindByValue(
+            value) != null)
+        {
+            ddlAccountType.SelectedValue =
+                value;
+        }
+    }
+
+
+    // =========================================================
+    // DATABASE VALUE HELPER
+    // =========================================================
+
+    private string GetDbValue(
+        SqlDataReader reader,
+        string columnName)
+    {
+        if (reader[columnName] == DBNull.Value)
+        {
+            return "";
+        }
+
+        return reader[columnName]
+            .ToString()
+            .Trim();
+    }
+
+
+    // =========================================================
+    // NULL / EMPTY VALUE HELPER
+    // =========================================================
+
+    private object ToDbValue(
+        string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return DBNull.Value;
+        }
+
+        return value.Trim();
+    }
+
+
+    // =========================================================
+    // VALIDATION MESSAGE
+    // =========================================================
+
+    private void ShowValidationMessage(
+        string message)
     {
         divMessage.Visible = true;
-        lblMessage.Text = message;
+
+        lblMessage.Text =
+            message;
     }
+
 
 }
