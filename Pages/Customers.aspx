@@ -213,6 +213,9 @@
                             DataField="Email"
                             HeaderText="Email" />
 
+                        <asp:BoundField 
+                            DataField="Address"
+                            HeaderText="Address" />
 
                         <asp:BoundField
                             DataField="City"

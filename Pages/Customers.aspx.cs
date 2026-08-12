@@ -36,6 +36,7 @@ public partial class Pages_Customers : System.Web.UI.Page
                 CustomerName,
                 Phone,
                 Email,
+                Address,
                 City,
                 IsActive
             FROM tbl_Customers

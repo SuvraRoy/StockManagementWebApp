@@ -4,53 +4,48 @@
 <html xmlns="http://www.w3.org/1999/xhtml" class="layout-menu-fixed layout-compact" data-assets-path="../assets/" data-template="vertical-menu-template-free">
 
 <head runat="server">
-
     <meta charset="UTF-8" />
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi" />
-    <title>Stock & Inventory Management System </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi" />
+    <title>Stock & Inventory Management System</title>
 
-    <link rel="icon" type="image/x-icon" href="~/assets/img/favicon/favicon.ico" />
+    <!-- Favicon & Fonts -->
+    <link rel="icon" type="image/x-icon" href="<%= Page.ResolveUrl("~/assets/img/favicon/favicon.ico") %>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
 
-    <link rel="stylesheet" href="~/assets/vendor/fonts/iconify-icons.css" />
-    <link rel="stylesheet" href="~/assets/vendor/css/core.css" />
-    <link rel="stylesheet" href="~/assets/css/demo.css" />
-    <link rel="stylesheet" href="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
-    <link rel="stylesheet" href="~/assets/vendor/libs/apex-charts/apex-charts.css" />
+    <!-- Core CSS Links -->
+    <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/fonts/iconify-icons.css") %>" />
+    <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/css/core.css") %>" />
+    <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/css/demo.css") %>" />
+    <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css") %>" />
+    <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/libs/apex-charts/apex-charts.css") %>" />
 
-    <%--<script src="~/assets/vendor/js/helpers.js" ></script>--%>
-    <%--<script src="~/assets/js/config.js"></script>--%>
-
+    <!-- Helpers & Config JS (Loaded early as required by Sneat template) -->
+    <script src="<%= Page.ResolveUrl("~/assets/vendor/js/helpers.js") %>"></script>
+    <script src="<%= Page.ResolveUrl("~/assets/js/config.js") %>"></script>
 
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
 
     <style>
         /* =========================================
-       SIDEBAR MENU LINKS - BLACK
-       ========================================= */
-
+           SIDEBAR MENU LINKS - BLACK
+           ========================================= */
         #layout-menu .menu-link,
         #layout-menu .menu-link div,
         #layout-menu .menu-link i {
             color: #000000 !important;
         }
 
-
         /* Section Headers */
-
         #layout-menu .menu-header-text {
             color: #6c757d !important;
         }
 
-
         /* =========================================
-       ADD (+) BUTTON
-       ========================================= */
-
+           ADD (+) BUTTON
+           ========================================= */
         #layout-menu .menu-item {
             position: relative;
         }
@@ -72,429 +67,231 @@
             z-index: 5;
         }
 
-
         /* Show + on hover */
-
         #layout-menu .menu-item:hover .menu-add-link {
             opacity: 1;
         }
 
-
         /* + Icon */
-
         #layout-menu .menu-add-link i {
             font-size: 20px;
             color: #000000 !important;
         }
 
-
         /* + Hover */
-
         #layout-menu .menu-add-link:hover {
             background-color: rgba(0, 0, 0, 0.08);
         }
 
-
         /* =========================================
-       DISABLED MENU ITEMS
-       ========================================= */
-
+           DISABLED MENU ITEMS
+           ========================================= */
         #layout-menu .disabled-menu-link {
             cursor: default;
             opacity: 0.55;
         }
 
-
-            #layout-menu .disabled-menu-link:hover {
-                background-color: transparent !important;
-            }
+        #layout-menu .disabled-menu-link:hover {
+            background-color: transparent !important;
+        }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
 
-        <asp:ScriptManager
-            ID="ScriptManager1"
-            runat="server">
-        </asp:ScriptManager>
-        <%--<div>--%>
+        <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
 
         <div class="layout-wrapper layout-content-navbar">
             <div class="layout-container">
 
-
-                <!--=============================  SIDEBAR START    ==============================-->
-
-                <!-- Sidebar -->
-                <!-- Sidebar -->
-                <aside id="layout-menu"
-                    class="layout-menu menu-vertical menu bg-menu-theme">
+                <!--============================= SIDEBAR START ==============================-->
+                <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
 
                     <!-- Brand -->
                     <div class="app-brand demo">
-
-                        <!-- Logo / Brand -->
-                        <a href="<%= ResolveUrl("~/Default.aspx") %>"
-                            class="app-brand-link">
-
+                        <a href="<%= ResolveUrl("~/Default.aspx") %>" class="app-brand-link">
                             <span class="app-brand-logo demo">
                                 <i class="bx bx-package fs-2"></i>
                             </span>
-
-                            <span class="app-brand-text demo menu-text fw-bolder ms-2">Stock Management
-                            </span>
-
+                            <span class="app-brand-text demo menu-text fw-bolder ms-2">Stock Management</span>
                         </a>
-
                     </div>
 
                     <div class="menu-inner-shadow"></div>
 
                     <ul class="menu-inner py-1">
 
-
-                        <!-- ========================= -->
                         <!-- MAIN -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Main</span>
                         </li>
 
                         <!-- Dashboard -->
                         <li class="menu-item">
-
-                            <a href="<%= ResolveUrl("~/Default.aspx") %>"
-                                class="menu-link">
-
+                            <a href="<%= ResolveUrl("~/Default.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
-
                                 <div>Dashboard</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- ========================= -->
                         <!-- INVENTORY -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Inventory</span>
                         </li>
 
-
                         <!-- Products -->
                         <li class="menu-item">
-
-                            <a href="<%= ResolveUrl("~/Pages/Products.aspx") %>"
-                                class="menu-link">
-
+                            <a href="<%= ResolveUrl("~/Pages/Products.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-package"></i>
-
                                 <div>Products</div>
-
                             </a>
-
-                            
                         </li>
-
 
                         <!-- Warehouses -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="<%= ResolveUrl("~/Pages/Warehouses.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-buildings"></i>
-
                                 <div>Warehouses</div>
-
                             </a>
-
+                            <a href="<%= ResolveUrl("~/Pages/WarehouseForm.aspx") %>" class="menu-add-link" title="Add Warehouse">
+                                <i class="bx bx-plus"></i>
+                            </a>
                         </li>
-
 
                         <!-- Suppliers -->
                         <li class="menu-item">
-
-                            <a href="<%= ResolveUrl("~/Pages/Suppliers.aspx") %>"
-                                class="menu-link">
-
+                            <a href="<%= ResolveUrl("~/Pages/Suppliers.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-store"></i>
-
                                 <div>Suppliers</div>
-
                             </a>
-
-                            <a href="<%= ResolveUrl("~/Pages/SupplierForm.aspx") %>"
-                                class="menu-add-link"
-                                title="Add Supplier">
-
+                            <a href="<%= ResolveUrl("~/Pages/SupplierForm.aspx") %>" class="menu-add-link" title="Add Supplier">
                                 <i class="bx bx-plus"></i>
-
                             </a>
-
                         </li>
-
 
                         <!-- Customers -->
                         <li class="menu-item">
-
-                            <a href="<%= ResolveUrl("~/Pages/Customers.aspx") %>"
-                                class="menu-link">
-
+                            <a href="<%= ResolveUrl("~/Pages/Customers.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-group"></i>
-
                                 <div>Customers</div>
-
                             </a>
-
-                            <a href="<%= ResolveUrl("~/Pages/CustomerForm.aspx") %>"
-                                class="menu-add-link"
-                                title="Add Customer">
-
+                            <a href="<%= ResolveUrl("~/Pages/CustomerForm.aspx") %>" class="menu-add-link" title="Add Customer">
                                 <i class="bx bx-plus"></i>
-
                             </a>
-
                         </li>
 
-
-                        <!-- ========================= -->
                         <!-- TRANSACTIONS -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Transactions</span>
                         </li>
 
-
-                        <!-- Purchases -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-cart-add"></i>
-
                                 <div>Purchases</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Sales -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-cart"></i>
-
                                 <div>Sales</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Purchase Returns -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-undo"></i>
-
                                 <div>Purchase Returns</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Sales Returns -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-redo"></i>
-
                                 <div>Sales Returns</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Stock Transfer -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-transfer"></i>
-
                                 <div>Stock Transfer</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Stock Adjustment -->
-                        <!-- Page not created yet -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-slider-alt"></i>
-
                                 <div>Stock Adjustment</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- ========================= -->
                         <!-- REPORTS -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Reports</span>
                         </li>
 
-
-                        <!-- Inventory Report -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
-
                                 <div>Inventory Report</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Purchase Report -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-line-chart"></i>
-
                                 <div>Purchase Report</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Sales Report -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-pie-chart-alt-2"></i>
-
                                 <div>Sales Report</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- ========================= -->
                         <!-- ADMINISTRATION -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Administration</span>
                         </li>
 
-
-                        <!-- Users -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-user"></i>
-
                                 <div>Users</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- Settings -->
                         <li class="menu-item">
-
-                            <a href="javascript:void(0);"
-                                class="menu-link disabled-menu-link">
-
+                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-cog"></i>
-
                                 <div>Settings</div>
-
                             </a>
-
                         </li>
 
-
-                        <!-- ========================= -->
                         <!-- ACCOUNT -->
-                        <!-- ========================= -->
-
                         <li class="menu-header small text-uppercase">
                             <span class="menu-header-text">Account</span>
                         </li>
 
-
-                        <!-- Logout -->
                         <li class="menu-item">
-
-                            <a href="<%= ResolveUrl("~/Logout.aspx") %>"
-                                class="menu-link">
-
+                            <a href="<%= ResolveUrl("~/login.aspx") %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-log-out"></i>
-
                                 <div>Logout</div>
-
                             </a>
-
                         </li>
 
                     </ul>
 
                 </aside>
-                <!-- / Sidebar -->
+                <!--============================= SIDEBAR END ==============================-->
 
-                <!--=============================  SIDEBAR END   ==============================-->
                 <div class="layout-page">
 
-
-                    <!--=============================     NAV START    ==============================-->
-
+                    <!--============================= NAV START ==============================-->
                     <nav class="layout-navbar container-xxl navbar-detached navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
 
                         <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 me-xl-0 d-xl-none">
@@ -509,19 +306,16 @@
                                 <div class="nav-item d-flex align-items-center">
                                     <span class="w-px-22 h-px-22"><i class="icon-base bx bx-search icon-md"></i></span>
                                     <asp:TextBox ID="txtGlobalSearch" runat="server" CssClass="form-control border-0 shadow-none ps-1 ps-sm-2" placeholder="Search product or SKU..."></asp:TextBox>
-
                                 </div>
                             </div>
                             <!-- /Search -->
 
                             <ul class="navbar-nav flex-row align-items-center ms-md-auto">
-
-
                                 <!-- User -->
                                 <li class="nav-item navbar-dropdown dropdown-user dropdown">
                                     <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <div class="avatar avatar-online">
-                                            <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                            <img src="<%= Page.ResolveUrl("~/assets/img/avatars/1.png") %>" alt="User Avatar" class="w-px-40 h-auto rounded-circle" />
                                         </div>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -530,7 +324,7 @@
                                                 <div class="d-flex">
                                                     <div class="flex-shrink-0 me-3">
                                                         <div class="avatar avatar-online">
-                                                            <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                                            <img src="<%= Page.ResolveUrl("~/assets/img/avatars/1.png") %>" alt="User Avatar" class="w-px-40 h-auto rounded-circle" />
                                                         </div>
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -560,8 +354,8 @@
                                         <li>
                                             <a class="dropdown-item" href="#">
                                                 <span class="d-flex align-items-center align-middle">
-                                                    <i class="flex-shrink-0 icon-base bx bx-credit-card icon-md me-3"></i><span
-                                                        class="flex-grow-1 align-middle">Billing Plan</span>
+                                                    <i class="flex-shrink-0 icon-base bx bx-credit-card icon-md me-3"></i>
+                                                    <span class="flex-grow-1 align-middle">Billing Plan</span>
                                                     <span class="flex-shrink-0 badge rounded-pill bg-danger">4</span>
                                                 </span>
                                             </a>
@@ -569,103 +363,68 @@
                                         <li>
                                             <div class="dropdown-divider my-1"></div>
                                         </li>
-
                                         <li>
-                                            <asp:LinkButton ID="LinkButton1" runat="server" CssClass="dropdown-item" OnClick="LinkButton1_Click">  
+                                            <asp:LinkButton ID="LinkButton1" runat="server" CssClass="dropdown-item" OnClick="LinkButton1_Click">
                                                 <i class="bx bx-power-off bx-md me-3"></i><span>Log Out</span>
                                             </asp:LinkButton>
                                         </li>
-
-
-
-
                                     </ul>
                                 </li>
                                 <!--/ User -->
                             </ul>
                         </div>
                     </nav>
-                    <!--=============================    NAV END    ==============================-->
+                    <!--============================= NAV END ==============================-->
 
                     <div class="content-wrapper">
-
 
                         <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
                         </asp:ContentPlaceHolder>
 
-                        <!--=============================  FOOTER START ==============================-->
+                        <!--============================= FOOTER START ==============================-->
                         <footer class="content-footer footer bg-footer-theme">
                             <div class="container-xxl">
-                                <div
-                                    class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+                                <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
                                     <div class="mb-2 mb-md-0">
-                                        ©
-                  <script>
-                      document.write(new Date().getFullYear());
-                  </script >
-                                        , made with ❤️ by
-                  <a href="" target="_blank" class="footer-link">Digital Icon</a>
+                                        © <%= DateTime.Now.Year %> , made with ❤️ by
+                                        <a href="#" target="_blank" class="footer-link">Digital Icon</a>
                                     </div>
-
                                 </div>
                             </div>
                         </footer>
-                        <!--=============================  FOOTER END   ==============================-->
+                        <!--============================= FOOTER END ==============================-->
 
                     </div>
-                    <%-- / content-wrapper --%>
+                    <!-- / content-wrapper -->
                 </div>
-                <%-- / layout-page --%>
+                <!-- / layout-page -->
             </div>
-            <%-- / layout-container --%>
+            <!-- / layout-container -->
 
             <!-- Overlay -->
             <div class="layout-overlay layout-menu-toggle"></div>
 
         </div>
-        <%-- / Layout wrapper --%>
+        <!-- / Layout wrapper -->
 
-        <!-- Core JS  -->
+        <!-- Core JS Libraries -->
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/libs/jquery/jquery.js") %>"></script>
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/libs/popper/popper.js") %>"></script>
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/js/bootstrap.js") %>"></script>
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js") %>"></script>
 
-        <%-- <script src="../assets/vendor/libs/jquery/jquery.js"></script>
-        <script src="../assets/vendor/libs/popper/popper.js"></script>
-        <script src="../assets/vendor/js/bootstrap.js"></script>
-        <script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-        <script src="../assets/vendor/js/menu.js"></script>--%>
-        <!-- endbuild -->
+        <!-- Menu & Core Template JS -->
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/js/menu.js") %>"></script>
 
         <!-- Vendors JS -->
-        <%--        <script src="../assets/vendor/libs/apex-charts/apexcharts.js"></script>--%>
+        <script src="<%= Page.ResolveUrl("~/assets/vendor/libs/apex-charts/apexcharts.js") %>"></script>
 
-        <!-- Main JS -->
-        <%--        <script src="../assets/js/main.js"></script>--%>
+        <!-- Main Template JS (Attaches toggle event listeners) -->
+        <script src="<%= Page.ResolveUrl("~/assets/js/main.js") %>"></script>
 
-        <!-- Page JS -->
-        <%--        <script src="../assets/js/dashboards-analytics.js"></script>--%>
-
-        <link rel="icon" type="image/x-icon" href="<%= Page.ResolveUrl("~/assets/img/favicon/favicon.ico") %>" />
-        <link rel="preconnect" href="https://googleapis.com" />
-        <link rel="preconnect" href="https://gstatic.com" crossorigin="anonymous" />
-        <link href="https://googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
-
-        <!-- Local CSS Links -->
-        <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/fonts/iconify-icons.css") %>" />
-        <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/css/core.css") %>" />
-        <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/css/demo.css") %>" />
-        <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css") %>" />
-        <link rel="stylesheet" href="<%= Page.ResolveUrl("~/assets/vendor/libs/apex-charts/apex-charts.css") %>" />
-        <script src="<%= ResolveUrl("~/assets/vendor/js/bootstrap.js") %>"></script>
-
-        <!-- Initial Script Links -->
-        <script src="<%= Page.ResolveUrl("~/assets/vendor/js/helpers.js") %>"></script>
-        <script src="<%= Page.ResolveUrl("~/assets/js/config.js") %>"></script>
-
-
-
-        <!-- Place this tag before closing body tag for github widget button. -->
+        <!-- GitHub Widget Button (Optional) -->
         <script async defer src="https://buttons.github.io/buttons.js"></script>
 
-        <%--</div>--%>
     </form>
 </body>
 </html>
