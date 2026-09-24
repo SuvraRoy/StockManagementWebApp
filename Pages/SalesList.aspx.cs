@@ -29,7 +29,7 @@ public partial class Pages_SalesList : System.Web.UI.Page
                 );
             }
 
-            // 2. Check if redirected from PaymentHistory.aspx
+            //  Check if redirected from PaymentHistory.aspx
             if (Request.QueryString["SalesID"] != null)
             {
                 int salesID;

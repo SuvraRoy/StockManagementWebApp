@@ -282,7 +282,7 @@
                             </a>
                         </li>
 
-                        <li class="menu-item">
+                       <%-- <li class="menu-item">
                             <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-undo"></i>
                                 <div>Purchase Returns</div>
@@ -294,19 +294,15 @@
                                 <i class="menu-icon tf-icons bx bx-redo"></i>
                                 <div>Sales Returns</div>
                             </a>
-                        </li>
+                        </li>--%>
 
                         <li class="menu-item">
-                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
+                            <a href="<%=ResolveUrl("~/Pages/StockTransferHistory.aspx" ) %>" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-transfer"></i>
                                 <div>Stock Transfer</div>
                             </a>
-                        </li>
-
-                        <li class="menu-item">
-                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
-                                <i class="menu-icon tf-icons bx bx-slider-alt"></i>
-                                <div>Stock Adjustment</div>
+                            <a href="<%=ResolveUrl("~/Pages/StockTransfer.aspx" ) %>" class="menu-add-link" title="Transfer Stock">
+                                <i class="bx bx-plus"></i>
                             </a>
                         </li>
 
@@ -345,13 +341,6 @@
                             <a href="javascript:void(0);" class="menu-link disabled-menu-link">
                                 <i class="menu-icon tf-icons bx bx-user"></i>
                                 <div>Users</div>
-                            </a>
-                        </li>
-
-                        <li class="menu-item">
-                            <a href="javascript:void(0);" class="menu-link disabled-menu-link">
-                                <i class="menu-icon tf-icons bx bx-cog"></i>
-                                <div>Settings</div>
                             </a>
                         </li>
 

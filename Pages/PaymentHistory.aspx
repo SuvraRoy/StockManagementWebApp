@@ -272,25 +272,6 @@
                                 HeaderText="Date"
                                 DataFormatString="{0:dd-MM-yyyy}" />
 
-                            <%-- <asp:TemplateField HeaderText="Invoice No.">
-                                <ItemTemplate>
-                                    <div class="d-flex align-items-center gap-1.5">
-                                        <span><%# Eval("InvoiceNumber") %></span>
-
-                                        <!-- External Link Button with rotation helper -->
-                                        <asp:LinkButton ID="btnShareInvoice" runat="server"
-                                            CommandName="ShareInvoice"
-                                            CommandArgument='<%# Eval("InvoiceNumber") %>'
-                                            CssClass="btn btn-link  p-2 text-decoration-none rotate-share-icon"
-                                            ToolTip="Open Invoice">          
-                
-                                        <!-- Boxicons equivalent -->
-                                        <i class="bx bx-link-external fs-6"></i>                
-                                       </asp:LinkButton>
-                                    </div>
-                                </ItemTemplate>
-                            </asp:TemplateField>--%>
-
                             <asp:TemplateField HeaderText="Invoice No.">
                                 <ItemTemplate>
                                     <div class="d-flex align-items-center gap-1.5">
@@ -305,12 +286,6 @@
                                     </div>
                                 </ItemTemplate>
                             </asp:TemplateField>
-
-
-                            <%-- <asp:BoundField
-                                DataField="InvoiceNumber"
-                                HeaderText="Invoice No." />--%>
-
 
 
                             <asp:BoundField
