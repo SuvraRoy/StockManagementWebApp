@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Data.SqlClient;
-using System.Data;
+using System.Configuration;
 
 public partial class Pages_Products : System.Web.UI.Page
 {
@@ -14,8 +15,7 @@ public partial class Pages_Products : System.Web.UI.Page
             return;
         }
 
-
-    if (!IsPostBack)
+        if (!IsPostBack)
         {
             LoadProductData();
             ClearModalFields();
@@ -38,7 +38,7 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
     // =========================================================
-    // ADD PRODUCT BUTTON
+    // ADD PRODUCT
     // =========================================================
 
     protected void btnAddProduct_Click(object sender, EventArgs e)
@@ -50,11 +50,11 @@ public partial class Pages_Products : System.Web.UI.Page
             GetType(),
             "OpenModal",
             @"
-        var myModal = new bootstrap.Modal(
-            document.getElementById('backDropModal')
-        );
-        myModal.show();
-        ",
+            var myModal = new bootstrap.Modal(
+                document.getElementById('backDropModal')
+            );
+            myModal.show();
+            ",
             true
         );
     }
@@ -73,32 +73,23 @@ public partial class Pages_Products : System.Web.UI.Page
         int reorderLevel;
 
 
-        // -----------------------------------------------------
-        // VALIDATION
-        // -----------------------------------------------------
-
+        // Product Name validation
         if (string.IsNullOrWhiteSpace(productName))
         {
-            ShowToast(
-                "Product Name is required",
-                "danger"
-            );
-
+            ShowToast("Product Name is required", "danger");
             return;
         }
 
 
+        // SKU validation
         if (string.IsNullOrWhiteSpace(sku))
         {
-            ShowToast(
-                "SKU is required",
-                "danger"
-            );
-
+            ShowToast("SKU is required", "danger");
             return;
         }
 
 
+        // Cost Price validation
         if (!decimal.TryParse(
             txtCostPrice.Text.Trim(),
             out costPrice))
@@ -112,6 +103,7 @@ public partial class Pages_Products : System.Web.UI.Page
         }
 
 
+        // Reorder Level validation
         if (!int.TryParse(
             txtReorderLevel.Text.Trim(),
             out reorderLevel))
@@ -147,11 +139,8 @@ public partial class Pages_Products : System.Web.UI.Page
         }
 
 
-        // -----------------------------------------------------
-        // DATABASE CONNECTION
-        // -----------------------------------------------------
-
         string connStr = Connection.getConnectionString();
+
 
         using (SqlConnection conn =
             new SqlConnection(connStr))
@@ -160,19 +149,17 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
             // -------------------------------------------------
-            // CHECK DUPLICATE SKU
+            // Check duplicate SKU
             // -------------------------------------------------
 
             string checkSkuQuery = @"
-            SELECT COUNT(*)
-            FROM tbl_Products
-            WHERE SKU = @SKU";
+                SELECT COUNT(*)
+                FROM tbl_Products
+                WHERE SKU = @SKU";
 
 
             using (SqlCommand cmd =
-                new SqlCommand(
-                    checkSkuQuery,
-                    conn))
+                new SqlCommand(checkSkuQuery, conn))
             {
                 cmd.Parameters.Add(
                     "@SKU",
@@ -200,36 +187,34 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
             // -------------------------------------------------
-            // INSERT PRODUCT
+            // Insert Product
             // -------------------------------------------------
 
             string insertQuery = @"
-            INSERT INTO tbl_Products
-            (
-                ProductName,
-                SKU,
-                CostPrice,
-                CurrentStock,
-                ReorderLevel,
-                CreatedDate,
-                IsActive
-            )
-            VALUES
-            (
-                @ProductName,
-                @SKU,
-                @CostPrice,
-                @CurrentStock,
-                @ReorderLevel,
-                @CreatedDate,
-                @IsActive
-            )";
+                INSERT INTO tbl_Products
+                (
+                    ProductName,
+                    SKU,
+                    CostPrice,
+                    CurrentStock,
+                    ReorderLevel,
+                    CreatedDate,
+                    IsActive
+                )
+                VALUES
+                (
+                    @ProductName,
+                    @SKU,
+                    @CostPrice,
+                    @CurrentStock,
+                    @ReorderLevel,
+                    @CreatedDate,
+                    @IsActive
+                )";
 
 
             using (SqlCommand insertCmd =
-                new SqlCommand(
-                    insertQuery,
-                    conn))
+                new SqlCommand(insertQuery, conn))
             {
                 insertCmd.Parameters.Add(
                     "@ProductName",
@@ -250,7 +235,6 @@ public partial class Pages_Products : System.Web.UI.Page
                         "@CostPrice",
                         SqlDbType.Decimal
                     );
-
 
                 costParameter.Precision = 18;
                 costParameter.Scale = 2;
@@ -314,38 +298,47 @@ public partial class Pages_Products : System.Web.UI.Page
 
     private void LoadProductData()
     {
-        string connStr =
-            Connection.getConnectionString();
-
-
-        using (SqlConnection conn =
-            new SqlConnection(connStr))
+        string connStr = Connection.getConnectionString();
+        using (SqlConnection conn = new SqlConnection(connStr))
         {
-            string searchTerm =
-                txtSearch.Text.Trim();
+            string searchTerm = txtSearch.Text.Trim();
 
 
             string query = @"
-            SELECT
-                ProductID,
-                ProductName,
-                SKU,
-                CostPrice,
-                CurrentStock,
-                ReorderLevel,
-                IsActive
-            FROM tbl_Products
-            WHERE
-                @SearchTerm = ''
-                OR ProductName LIKE '%' + @SearchTerm + '%'
-                OR SKU LIKE '%' + @SearchTerm + '%'
-            ORDER BY ProductID DESC";
+                SELECT
+                    p.ProductID,
+                    p.ProductName,
+                    p.SKU,
+                    p.CostPrice,
+                    p.CurrentStock,
+                    p.ReorderLevel,
+                    p.IsActive,
+
+                    CASE
+                        WHEN EXISTS
+                        (
+                            SELECT 1
+                            FROM tbl_WarehouseStock ws
+                            WHERE
+                                ws.ProductID = p.ProductID
+                                AND ws.Quantity <= p.ReorderLevel
+                        )
+                        THEN 1
+                        ELSE 0
+                    END AS IsLowStock
+
+                FROM tbl_Products p
+
+                WHERE
+                    @SearchTerm = ''
+                    OR p.ProductName LIKE '%' + @SearchTerm + '%'
+                    OR p.SKU LIKE '%' + @SearchTerm + '%'
+
+                ORDER BY p.ProductID DESC";
 
 
             using (SqlCommand cmd =
-                new SqlCommand(
-                    query,
-                    conn))
+                new SqlCommand(query, conn))
             {
                 cmd.Parameters.Add(
                     "@SearchTerm",
@@ -355,8 +348,7 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
                 using (SqlDataAdapter da =
-                    new SqlDataAdapter(
-                        cmd))
+                    new SqlDataAdapter(cmd))
                 {
                     DataTable dt =
                         new DataTable();
@@ -365,9 +357,7 @@ public partial class Pages_Products : System.Web.UI.Page
                     da.Fill(dt);
 
 
-                    gvProducts.DataSource =
-                        dt;
-
+                    gvProducts.DataSource = dt;
 
                     gvProducts.DataBind();
                 }
@@ -377,7 +367,7 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
     // =========================================================
-    // GRID VIEW - VIEW PRODUCT
+    // VIEW PRODUCT
     // =========================================================
 
     protected void gvProducts_RowCommand(
@@ -410,13 +400,10 @@ public partial class Pages_Products : System.Web.UI.Page
             productID;
 
 
-        LoadProductDetails(
-            productID
-        );
+        LoadProductDetails(productID);
 
 
-        pnlProductDetails.Visible =
-            true;
+        pnlProductDetails.Visible = true;
     }
 
 
@@ -424,8 +411,7 @@ public partial class Pages_Products : System.Web.UI.Page
     // LOAD PRODUCT DETAILS
     // =========================================================
 
-    private void LoadProductDetails(
-        int productID)
+    private void LoadProductDetails(int productID)
     {
         string connStr =
             Connection.getConnectionString();
@@ -438,22 +424,20 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
             string loadQry = @"
-            SELECT
-                ProductID,
-                ProductName,
-                SKU,
-                CostPrice,
-                CurrentStock,
-                ReorderLevel,
-                IsActive
-            FROM tbl_Products
-            WHERE ProductID = @ProductID";
+                SELECT
+                    ProductID,
+                    ProductName,
+                    SKU,
+                    CostPrice,
+                    CurrentStock,
+                    ReorderLevel,
+                    IsActive
+                FROM tbl_Products
+                WHERE ProductID = @ProductID";
 
 
             using (SqlCommand cmd =
-                new SqlCommand(
-                    loadQry,
-                    conn))
+                new SqlCommand(loadQry, conn))
             {
                 cmd.Parameters.Add(
                     "@ProductID",
@@ -475,19 +459,20 @@ public partial class Pages_Products : System.Web.UI.Page
                             "danger"
                         );
 
-
                         return;
                     }
 
 
+                    // -----------------------------------------
+                    // Basic details
+                    // -----------------------------------------
+
                     lblDetailName.Text =
-                        reader["ProductName"]
-                        .ToString();
+                        reader["ProductName"].ToString();
 
 
                     lblDetailSKU.Text =
-                        reader["SKU"]
-                        .ToString();
+                        reader["SKU"].ToString();
 
 
                     lblDetailCost.Text =
@@ -497,13 +482,11 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
                     lblDetailStock.Text =
-                        reader["CurrentStock"]
-                        .ToString();
+                        reader["CurrentStock"].ToString();
 
 
                     lblDetailReorder.Text =
-                        reader["ReorderLevel"]
-                        .ToString();
+                        reader["ReorderLevel"].ToString();
 
 
                     bool isActive =
@@ -512,7 +495,6 @@ public partial class Pages_Products : System.Web.UI.Page
                         );
 
 
-                    // STATUS LABEL
                     lblDetailStatus.Text =
                         isActive
                             ? "Active"
@@ -525,7 +507,6 @@ public partial class Pages_Products : System.Web.UI.Page
                             : "badge bg-label-secondary";
 
 
-                    // ACTIVATE / DEACTIVATE BUTTON
                     btnToggleStatus.Text =
                         isActive
                             ? "Deactivate"
@@ -536,6 +517,122 @@ public partial class Pages_Products : System.Web.UI.Page
                         isActive
                             ? "btn btn-warning"
                             : "btn btn-success";
+                }
+            }
+
+
+            // -------------------------------------------------
+            // Load only low-stock warehouses
+            // -------------------------------------------------
+
+            LoadLowStockWarehouses(
+                productID
+            );
+        }
+    }
+
+
+    // =========================================================
+    // LOAD LOW STOCK WAREHOUSES
+    // =========================================================
+
+    private void LoadLowStockWarehouses(
+        int productID)
+    {
+        string connStr =
+            Connection.getConnectionString();
+
+
+        using (SqlConnection conn =
+            new SqlConnection(connStr))
+        {
+            conn.Open();
+
+
+            string query = @"
+                SELECT
+                    w.WarehouseName,
+                    ws.Quantity
+
+                FROM tbl_WarehouseStock ws
+
+                INNER JOIN tbl_Warehouses w
+                    ON ws.WarehouseID = w.WarehouseID
+
+                INNER JOIN tbl_Products p
+                    ON ws.ProductID = p.ProductID
+
+                WHERE
+                    ws.ProductID = @ProductID
+                    AND ws.Quantity <= p.ReorderLevel
+
+                ORDER BY
+                    w.WarehouseName";
+
+
+            using (SqlCommand cmd =
+                new SqlCommand(query, conn))
+            {
+                cmd.Parameters.Add(
+                    "@ProductID",
+                    SqlDbType.Int
+                ).Value = productID;
+
+
+                using (SqlDataAdapter da =
+                    new SqlDataAdapter(cmd))
+                {
+                    DataTable dt =
+                        new DataTable();
+
+
+                    da.Fill(dt);
+
+
+                    // -----------------------------------------
+                    // Only display section if low stock exists
+                    // -----------------------------------------
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        pnlLowStockWarehouses.Visible =
+                            true;
+
+
+                        rptLowStockWarehouses.DataSource =
+                            dt;
+
+
+                        rptLowStockWarehouses.DataBind();
+
+
+                        lblDetailStockStatus.Text =
+                            "Low Stock";
+
+
+                        lblDetailStockStatus.CssClass =
+                            "badge bg-label-danger";
+                    }
+                    else
+                    {
+                        pnlLowStockWarehouses.Visible =
+                            false;
+
+
+                        rptLowStockWarehouses.DataSource =
+                            null;
+
+
+                        rptLowStockWarehouses.DataBind();
+
+
+                        lblDetailStockStatus.Text =
+                            "OK";
+
+
+                        lblDetailStockStatus.CssClass =
+                            "badge bg-label-success";
+                    }
                 }
             }
         }
@@ -568,8 +665,8 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
         Response.Redirect(
-            "EditProduct.aspx?ProductID="
-            + productID
+            "EditProduct.aspx?ProductID=" +
+            productID
         );
     }
 
@@ -610,19 +707,20 @@ public partial class Pages_Products : System.Web.UI.Page
 
 
             string updateQuery = @"
-            UPDATE tbl_Products
-            SET IsActive =
-                CASE
-                    WHEN IsActive = 1 THEN 0
-                    ELSE 1
-                END
-            WHERE ProductID = @ProductID";
+                UPDATE tbl_Products
+
+                SET IsActive =
+                    CASE
+                        WHEN IsActive = 1
+                            THEN 0
+                        ELSE 1
+                    END
+
+                WHERE ProductID = @ProductID";
 
 
             using (SqlCommand cmd =
-                new SqlCommand(
-                    updateQuery,
-                    conn))
+                new SqlCommand(updateQuery, conn))
             {
                 cmd.Parameters.Add(
                     "@ProductID",
@@ -637,6 +735,7 @@ public partial class Pages_Products : System.Web.UI.Page
                 if (rowsAffected > 0)
                 {
                     LoadProductData();
+
 
                     LoadProductDetails(
                         productID
@@ -743,17 +842,26 @@ public partial class Pages_Products : System.Web.UI.Page
             GetType(),
             "showToast",
             @"
-        var toastElement =
-            document.getElementById('liveToast');
+            var toastElement =
+                document.getElementById('liveToast');
 
-        var toast =
-            new bootstrap.Toast(toastElement);
+            var toast =
+                new bootstrap.Toast(toastElement);
 
-        toast.show();
-        ",
+            toast.show();
+            ",
             true
         );
     }
 
+    protected void gvProducts_PageIndexChanging(object sender, GridViewPageEventArgs e)
+    {
+        gvProducts.PageIndex = e.NewPageIndex;
+        LoadProductData();
+    }
 
+    protected void btnCloseDetails_Click(object sender, EventArgs e)
+    {
+        pnlProductDetails.Visible = false;
+    }
 }
