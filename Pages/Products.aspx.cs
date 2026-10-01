@@ -675,9 +675,7 @@ public partial class Pages_Products : System.Web.UI.Page
     // ACTIVATE / DEACTIVATE PRODUCT
     // =========================================================
 
-    protected void btnToggleStatus_Click(
-        object sender,
-        EventArgs e)
+    protected void btnToggleStatus_Click( object sender, EventArgs e)
     {
         if (ViewState["SelectedProductID"] == null)
         {
@@ -700,8 +698,7 @@ public partial class Pages_Products : System.Web.UI.Page
             Connection.getConnectionString();
 
 
-        using (SqlConnection conn =
-            new SqlConnection(connStr))
+        using (SqlConnection conn = new SqlConnection(connStr))
         {
             conn.Open();
 
@@ -790,9 +787,7 @@ public partial class Pages_Products : System.Web.UI.Page
     // SHOW TOAST
     // =========================================================
 
-    private void ShowToast(
-        string message,
-        string type)
+    private void ShowToast(string message, string type)
     {
         lblToast.Text =
             message;
